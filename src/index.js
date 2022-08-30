@@ -1,43 +1,53 @@
 const { SamCore, Helpers } = require('./SamCore.js');
 
+let ConsoleArgs = {
+  commander: null,
+  options: null,
+
+  setup() {
+    this.commander = require('commander');
+
+    this.commander
+      .version('1.0.0', '-v, --version')
+      .usage('[OPTIONS]...')
+      .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
+      .option('-s, --does-settings-exist', 'Find out if the settings file for SamCore exists')
+      .parse(process.argv);
+      // .option('-f, --flag', 'Detects if the flag is present.')
+
+    this.options = this.commander.opts();
+  }
+}
+
 function main() {
+  Helpers.log_silent = true; // Hide all logs, except ones we want
+
+  // Setup outside arguments
+  ConsoleArgs.setup();
 
   // Name of the node we are running
-  SamCore.nodeName = 'testNode';
+  SamCore.nodeName = 'console';
 
-  // When connection to SamCore is initialized
   SamCore.onConnect = () => {
-    SamCore.doesNodeExist('gdrive');  // See if this node is connected
-    SamCore.doesSettingsExist();  // See if settings.json exists for SamCore
+    if ('doesNodeExist' in ConsoleArgs.options) {
+      const nodeName = ConsoleArgs.options.doesNodeExist;
+      SamCore.doesNodeExist(nodeName);
+    }
+
+    else if ('doesSettingsExist' in ConsoleArgs.options) {
+      SamCore.doesSettingsExist();
+    }
   }
 
   SamCore.doesNodeExistReturn = (data) => {
-    Helpers.log({leader: 'warning', space: true}, `Does Node "${data.nodeName}" exist?:`, data.response);
+    Helpers.log({loud: true}, `{"response": ${data.response ? 1 : 0}}`);
+    SamCore.disconnect();
   }
 
   SamCore.doesSettingsExistReturn = (data) => {
-    Helpers.log({leader: 'warning', space: true}, 'Does SamCore settings exist?:', data.response);
+    Helpers.log({loud: true}, `{"response": ${data.response ? 1 : 0}}`);
+    SamCore.disconnect();
   }
-
-/**
-  // Responses from SamCore
-  SamCore.onMessage = (data) => {
-    // Responses from SamCore
-    if (data.nodeSender = 'samCore') {
-      // List all API calls we will need to receive responses from
-      if (data.apiCall = 'doesNodeExist') {
-        Helpers.log('sub', `doesNodeExist: ${data.packet}`, {space: true});
-      }
-
-      return;
-    }
-
-    // Responses from other nodes
-    if () {
-
-    }
-  }
-*/
 
   // Start the connection process
   SamCore.run();
