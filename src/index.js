@@ -73,7 +73,7 @@ function main() {
 
   SamCore.onError = (data) => {
     Helpers.log({loud: true}, JSON.stringify({
-      response: "error",
+      response: "errorMessage",
       error: data.response
     }));
     SamCore.disconnect();
@@ -81,14 +81,14 @@ function main() {
 
   SamCore.doesNodeExistReturn = (data) => {
     Helpers.log({loud: true}, JSON.stringify({
-      response: data.response ? 1 : 0
+      response: data.response
     }));
     SamCore.disconnect();
   }
 
   SamCore.doesSettingsExistReturn = (data) => {
     Helpers.log({loud: true}, JSON.stringify({
-      response: data.response ? 1 : 0
+      response: data.response
     }));
     SamCore.disconnect();
   }
