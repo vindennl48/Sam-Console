@@ -1,3 +1,7 @@
+/**
+ * TODO: Add cli argument for node-ipc verbose
+ */
+
 const { SamCore, Helpers } = require('./SamCore.js');
 
 let ConsoleArgs = {
@@ -52,6 +56,9 @@ function main() {
           packet: {message: ConsoleArgs.options.sendMessage}
         });
       } else {
+        /**
+          * TODO: change the output to json format so it can be interpreted by LUA
+          * */
         Helpers.log({leader: 'warning', loud: true}, 'sendMessage action requres --node argument!');
         SamCore.disconnect();
       }
