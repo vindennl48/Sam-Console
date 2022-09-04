@@ -1,5 +1,5 @@
-const { Client }  = require('../../SamCore/src/Client.js');
-const { Helpers } = require('../../SamCore/src/Helpers.js');
+const { Client }  = require('../../samcore/src/Client.js');
+const { Helpers } = require('../../samcore/src/Helpers.js');
 
 // Setup all of the command line arguments
 let ConsoleArgs = {
@@ -25,8 +25,8 @@ ConsoleArgs.setup();
 
 Helpers.log_silent = true;
 
-let nodeName   = 'Console';
-let serverName = 'SamCore';
+let nodeName   = 'console';
+let serverName = 'samcore';
 let node       = new Client(nodeName, serverName);
 
 node

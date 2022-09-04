@@ -1,5 +1,5 @@
 {
-  "name": "Console",
+  "name": "console",
   "version": "1.0.0",
   "description": "A node for using in the terminal",
   "main": "./src/index.js",
