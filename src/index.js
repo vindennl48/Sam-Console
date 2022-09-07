@@ -30,18 +30,16 @@ let serverName = 'samcore';
 let node       = new Client(nodeName, serverName);
 
 node
-  .addApiCall('return', function(packet) {
-    if ( this.receive(serverName, 'doesNodeExist', packet) ) {
-      Helpers.log({loud: true}, packet.data);
-      this.ipc.disconnect(serverName);
-    }
+  .addReturnCall(serverName, 'doesNodeExist', function(packet) {
+    Helpers.log({loud: true}, packet.data);
+    this.ipc.disconnect(serverName);
   })
   .run(function() {
     if ('doesNodeExist' in ConsoleArgs.options) {
-      this.call(serverName, 'doesNodeExist', ConsoleArgs.options.doesNodeExist);
+      this.callApi(serverName, 'doesNodeExist', ConsoleArgs.options.doesNodeExist);
     }
     if ('sendMessage' in ConsoleArgs.options) {
-      this.call(ConsoleArgs.options.node, 'message', ConsoleArgs.options.sendMessage);
+      this.callApi(ConsoleArgs.options.node, 'message', ConsoleArgs.options.sendMessage);
       this.ipc.disconnect(serverName);
     }
   });
