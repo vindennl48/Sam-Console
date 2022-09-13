@@ -12,10 +12,12 @@ let ConsoleArgs = {
     this.commander
       .version('1.0.0', '-v, --version')
       .usage('[OPTIONS]...')
-      .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
-      .option('-m, --send-message <message>', 'Send a message to another node')
-      .option('--node <node>', 'Specify node to send message to')
+      .option('-n, --new-song <name>', 'add song')
+      .option('-l, --get-song-list', 'get list of all songs')
       .parse(process.argv);
+      // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
+      // .option('-m, --send-message <message>', 'Send a message to another node')
+      // .option('--node <node>', 'Specify node to send message to')
       // .option('-f, --flag', 'Detects if the flag is present.')
 
     this.options = this.commander.opts();
@@ -30,16 +32,26 @@ let serverName = 'samcore';
 let node       = new Client(nodeName, serverName);
 
 node
-  .addReturnCall(serverName, 'doesNodeExist', function(packet) {
-    Helpers.log({loud: true}, packet.data);
+  .addReturnCall('dbjson', 'newSong', function(packet) {
+    let result = {data: packet.data};
+    Helpers.log({loud: true}, JSON.stringify(result));
     this.ipc.disconnect(serverName);
   })
+  .addReturnCall('dbjson', 'getSongList', function(packet) {
+    let result = packet.data;
+    // let result = packet.data[0];
+    Helpers.log({loud: true}, JSON.stringify(result));
+    this.ipc.disconnect(serverName);
+  })
+
   .run(function() {
-    if ('doesNodeExist' in ConsoleArgs.options) {
-      this.callApi(serverName, 'doesNodeExist', ConsoleArgs.options.doesNodeExist);
+    if ('newSong' in ConsoleArgs.options) {
+      let name = ConsoleArgs.options.newSong;
+      let username = 'mitch';  // get this from samcore data
+      this.callApi('dbjson', 'newSong', { name: name, username: username });
     }
-    if ('sendMessage' in ConsoleArgs.options) {
-      this.callApi(ConsoleArgs.options.node, 'message', ConsoleArgs.options.sendMessage);
-      this.ipc.disconnect(serverName);
+
+    if ('getSongList' in ConsoleArgs.options) {
+      this.callApi('dbjson', 'getSongList');
     }
   });
