@@ -2,7 +2,7 @@ const { Client }  = require('../../samcore/src/Client.js');
 const { Helpers } = require('../../samcore/src/Helpers.js');
 
 // Setup all of the command line arguments
-let ConsoleArgs = {
+let cargs = {
   commander: null,
   options: null,
 
@@ -12,8 +12,9 @@ let ConsoleArgs = {
     this.commander
       .version('1.0.0', '-v, --version')
       .usage('[OPTIONS]...')
-      .option('-n, --new-song <name>', 'add song')
-      .option('-l, --get-song-list', 'get list of all songs')
+      .option('-l, --get-songs',                        'get all songs')
+      .option('-s, --get-song <song name>',             'get data on specific song')
+      .option('-u, --update-song <name/attr/value...>', 'add data to song or create new song')
       .parse(process.argv);
       // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
       // .option('-m, --send-message <message>', 'Send a message to another node')
@@ -23,7 +24,7 @@ let ConsoleArgs = {
     this.options = this.commander.opts();
   }
 }
-ConsoleArgs.setup();
+cargs.setup();
 
 Helpers.log_silent = true;
 
@@ -31,27 +32,104 @@ let nodeName   = 'console';
 let serverName = 'samcore';
 let node       = new Client(nodeName, serverName);
 
-node
-  .addReturnCall('dbjson', 'newSong', function(packet) {
-    let result = {data: packet.data};
-    Helpers.log({loud: true}, JSON.stringify(result));
-    this.ipc.disconnect(serverName);
-  })
-  .addReturnCall('dbjson', 'getSongList', function(packet) {
-    let result = packet.data;
-    // let result = packet.data[0];
-    Helpers.log({loud: true}, JSON.stringify(result));
-    this.ipc.disconnect(serverName);
-  })
+node.run({
+  onInit:    onInit,
+  onConnect: onConnect
+});
 
-  .run(function() {
-    if ('newSong' in ConsoleArgs.options) {
-      let name = ConsoleArgs.options.newSong;
-      let username = 'mitch';  // get this from samcore data
-      this.callApi('dbjson', 'newSong', { name: name, username: username });
-    }
+/**
+  * Before we can start running the node, we need to get the username
+  * and settings
+  */
+async function onInit() {}
 
-    if ('getSongList' in ConsoleArgs.options) {
-      this.callApi('dbjson', 'getSongList');
-    }
-  });
+/**
+  * Any code that needs to run when the node starts
+  */
+async function onConnect() {
+  if ('getSongs' in cargs.options) {
+    Helpers.log({loud: true}, JSON.stringify(
+      await this.callApi('dbjson', 'getSongs')
+    ));
+  }
+
+  else if ('getSong' in cargs.options) {
+    let song = cargs.options.getSong;
+
+    Helpers.log({loud: true}, JSON.stringify(
+      await this.callApi('dbjson', 'getSong', song), null, 2
+    ));
+  }
+
+  else if ('updateSong' in cargs.options) {
+    let name  = cargs.options.updateSong[0];
+    let attr  = cargs.options.updateSong[1];
+    let value = cargs.options.updateSong[2];
+    Helpers.log({loud: true}, JSON.stringify(
+      await this.callApi(
+        'dbjson',
+        'updateSong',
+        { name: name, attr: attr, value: value }
+      ), null, 2
+    ));
+  }
+
+  this.ipc.disconnect(serverName);
+}
+
+
+
+//  node
+//    .addReturnCall('dbjson', 'newSong', function(packet) {
+//      let result = {data: packet.data};
+//      Helpers.log({loud: true}, JSON.stringify(result));
+//      this.ipc.disconnect(serverName);
+//    })
+//    .addReturnCall('dbjson', 'getSongList', function(packet) {
+//      let result = packet.data;
+//      // let result = packet.data[0];
+//      Helpers.log({loud: true}, JSON.stringify(result));
+//      this.ipc.disconnect(serverName);
+//    })
+//  
+//    .run(onInit=function(callback){
+//      let dependencies = ['dbjson', 'gdrive'];
+//      let i = 0;
+//  
+//      this.callApi(serverName, 'doesNodeExist', dependencies[i], doesNodeExist);
+//  
+//      function doesNodeExist(packet) {
+//        // Helpers.log({leader: 'arrow', loud: true}, 'packet: ', packet);
+//        if (packet.data) {
+//          Helpers.log({leader: 'highlight', loud: true}, `FOUND ${packet.bdata}!`);
+//  
+//          if (dependencies.length-1 == i) {
+//            callback();
+//          } else {
+//            i = i+1;
+//            this.callApi(serverName, 'doesNodeExist', dependencies[i], doesNodeExist);
+//          }
+//  
+//        } else {
+//          Helpers.log({leader: 'highlight', loud: true}, `Trying again for ${packet.bdata}..`);
+//          setTimeout(() => {
+//            this.callApi(serverName, 'doesNodeExist', packet.bdata, doesNodeExist);
+//          }, 1000);
+//        }
+//      }
+//  
+//    }, onConnect=function(){
+//      Helpers.log({leader: 'arrow', loud: true}, 'made it!');
+//    });
+//  
+//  //   .run(function() {
+//  //     if ('newSong' in ConsoleArgs.options) {
+//  //       let name = ConsoleArgs.options.newSong;
+//  //       let username = 'mitch';  // get this from samcore data
+//  //       this.callApi('dbjson', 'newSong', { name: name, username: username });
+//  //     }
+//  // 
+//  //     if ('getSongList' in ConsoleArgs.options) {
+//  //       this.callApi('dbjson', 'getSongList');
+//  //     }
+//  //   });
