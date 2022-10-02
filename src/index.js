@@ -1,10 +1,11 @@
+const fs          = require('fs');
 const { Client }  = require('../../samcore/src/Client.js');
 const { Helpers } = require('../../samcore/src/Helpers.js');
 
 // Setup all of the command line arguments
 let cargs = {
   commander: null,
-  options: null,
+  options:   null,
 
   setup() {
     this.commander = require('commander');
@@ -15,6 +16,7 @@ let cargs = {
       .option('-l, --get-songs',                        'get all songs')
       .option('-s, --get-song <song name>',             'get data on specific song')
       .option('-u, --update-song <name/attr/value...>', 'add data to song or create new song')
+      .option('-n, --new-song <name>',                  'create a new song')
       .parse(process.argv);
       // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
       // .option('-m, --send-message <message>', 'Send a message to another node')
@@ -26,7 +28,15 @@ let cargs = {
 }
 cargs.setup();
 
+// Helpers with exporting to console
 Helpers.log_silent = true;
+function output(obj, pretty=true) {
+  let result = ""
+  if (pretty) { result = JSON.stringify(obj, null, 2); }
+  else        { result = JSON.stringify(obj); }
+  Helpers.log({loud: true}, result);
+}
+//--------------------
 
 let nodeName   = 'console';
 let serverName = 'samcore';
@@ -48,30 +58,31 @@ async function onInit() {}
   */
 async function onConnect() {
   if ('getSongs' in cargs.options) {
-    Helpers.log({loud: true}, JSON.stringify(
-      await this.callApi('dbjson', 'getSongs')
-    ));
+    output( await this.callApi('dbjson', 'getSongs') );
   }
 
   else if ('getSong' in cargs.options) {
     let song = cargs.options.getSong;
 
-    Helpers.log({loud: true}, JSON.stringify(
-      await this.callApi('dbjson', 'getSong', song), null, 2
-    ));
+    output( await this.callApi('dbjson', 'getSong', { name: song }) );
   }
 
   else if ('updateSong' in cargs.options) {
     let name  = cargs.options.updateSong[0];
     let attr  = cargs.options.updateSong[1];
     let value = cargs.options.updateSong[2];
-    Helpers.log({loud: true}, JSON.stringify(
-      await this.callApi(
-        'dbjson',
-        'updateSong',
-        { name: name, attr: attr, value: value }
-      ), null, 2
+
+    output(await this.callApi(
+      'dbjson',
+      'updateSong',
+      { name: name, attr: attr, value: value }
     ));
+  }
+
+  else if ('newSong' in cargs.options) {
+    let name = cargs.options.newSong;
+
+    output(await this.callApi('dbjson', 'newSong', { name: name }));
   }
 
   this.ipc.disconnect(serverName);
