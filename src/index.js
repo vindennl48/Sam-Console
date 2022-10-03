@@ -17,6 +17,7 @@ let cargs = {
       .option('-s, --get-song <song name>',             'get data on specific song')
       .option('-u, --update-song <name/attr/value...>', 'add data to song or create new song')
       .option('-n, --new-song <name>',                  'create a new song')
+      .option('-w, --get-daw-home-dir <name>',          'Get working directory of daw')
       .parse(process.argv);
       // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
       // .option('-m, --send-message <message>', 'Send a message to another node')
@@ -83,6 +84,12 @@ async function onConnect() {
     let name = cargs.options.newSong;
 
     output(await this.callApi('dbjson', 'newSong', { name: name }));
+  }
+
+  else if ('getDawHomeDir' in cargs.options) {
+    let name = cargs.options.getDawHomeDir;
+
+    output(await this.callApi(serverName, 'getDawHomeDir', { name: name }));
   }
 
   this.ipc.disconnect(serverName);
