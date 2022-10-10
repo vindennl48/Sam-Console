@@ -16,7 +16,7 @@ let cargs = {
       .option('-l, --get-songs',                        'get all songs')
       .option('-s, --get-song <song name>',             'get data on specific song')
       .option('-u, --update-song <name/attr/value...>', 'add data to song or create new song')
-      .option('-n, --new-song <name>',                  'create a new song')
+      .option('-n, --new-song <name/daw...>',           'create a new song')
       .option('-w, --get-daw-home-dir <name>',          'Get working directory of daw')
       .parse(process.argv);
       // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
@@ -81,9 +81,16 @@ async function onConnect() {
   }
 
   else if ('newSong' in cargs.options) {
-    let name = cargs.options.newSong;
+    let name = cargs.options.newSong[0];
+    let daw  = cargs.options.newSong[1];
 
-    output(await this.callApi('dbjson', 'newSong', { name: name }));
+    let packet = await this.callApi('dbjson', 'newSong', { name: name })
+
+    if (packet.data.status) {
+      output(await this.callApi('files', 'newSong', { name: name, daw: daw }));
+    } else {
+      output(packet)
+    }
   }
 
   else if ('getDawHomeDir' in cargs.options) {
@@ -94,60 +101,3 @@ async function onConnect() {
 
   this.ipc.disconnect(serverName);
 }
-
-
-
-//  node
-//    .addReturnCall('dbjson', 'newSong', function(packet) {
-//      let result = {data: packet.data};
-//      Helpers.log({loud: true}, JSON.stringify(result));
-//      this.ipc.disconnect(serverName);
-//    })
-//    .addReturnCall('dbjson', 'getSongList', function(packet) {
-//      let result = packet.data;
-//      // let result = packet.data[0];
-//      Helpers.log({loud: true}, JSON.stringify(result));
-//      this.ipc.disconnect(serverName);
-//    })
-//  
-//    .run(onInit=function(callback){
-//      let dependencies = ['dbjson', 'gdrive'];
-//      let i = 0;
-//  
-//      this.callApi(serverName, 'doesNodeExist', dependencies[i], doesNodeExist);
-//  
-//      function doesNodeExist(packet) {
-//        // Helpers.log({leader: 'arrow', loud: true}, 'packet: ', packet);
-//        if (packet.data) {
-//          Helpers.log({leader: 'highlight', loud: true}, `FOUND ${packet.bdata}!`);
-//  
-//          if (dependencies.length-1 == i) {
-//            callback();
-//          } else {
-//            i = i+1;
-//            this.callApi(serverName, 'doesNodeExist', dependencies[i], doesNodeExist);
-//          }
-//  
-//        } else {
-//          Helpers.log({leader: 'highlight', loud: true}, `Trying again for ${packet.bdata}..`);
-//          setTimeout(() => {
-//            this.callApi(serverName, 'doesNodeExist', packet.bdata, doesNodeExist);
-//          }, 1000);
-//        }
-//      }
-//  
-//    }, onConnect=function(){
-//      Helpers.log({leader: 'arrow', loud: true}, 'made it!');
-//    });
-//  
-//  //   .run(function() {
-//  //     if ('newSong' in ConsoleArgs.options) {
-//  //       let name = ConsoleArgs.options.newSong;
-//  //       let username = 'mitch';  // get this from samcore data
-//  //       this.callApi('dbjson', 'newSong', { name: name, username: username });
-//  //     }
-//  // 
-//  //     if ('getSongList' in ConsoleArgs.options) {
-//  //       this.callApi('dbjson', 'getSongList');
-//  //     }
-//  //   });
