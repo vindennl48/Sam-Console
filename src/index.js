@@ -1,4 +1,3 @@
-const fs          = require('fs');
 const { Client }  = require('../../samcore/src/Client.js');
 const { Helpers } = require('../../samcore/src/Helpers.js');
 
@@ -18,6 +17,7 @@ let cargs = {
       .option('-u, --update-song <name/attr/value...>', 'add data to song or create new song')
       .option('-n, --new-song <name/daw...>',           'create a new song')
       .option('-w, --get-daw-home-dir <name>',          'Get working directory of daw')
+      .option('-c, --call <node/api/args...>',          'Call an api call from the node network')
       .parse(process.argv);
       // .option('-n, --does-node-exist <value>', 'Find out if a node is active in the network')
       // .option('-m, --send-message <message>', 'Send a message to another node')
@@ -58,7 +58,24 @@ async function onInit() {}
   * Any code that needs to run when the node starts
   */
 async function onConnect() {
-  if ('getSongs' in cargs.options) {
+  /**
+    * Make an API call in the node network. args must be in the form of an
+    * object.
+    */
+  if ('call' in cargs.options) {
+    let node = cargs.options.call[0];
+    let api  = cargs.options.call[1];
+    let args = cargs.options.call[2];
+
+    if (args === undefined) {
+      output( await this.callApi(node, api) );
+    }
+    else {
+      output( await this.callApi(node, api, JSON.parse(args)) );
+    }
+  }
+
+  else if ('getSongs' in cargs.options) {
     output( await this.callApi('dbjson', 'getSongs') );
   }
 
@@ -66,6 +83,16 @@ async function onConnect() {
     let song = cargs.options.getSong;
 
     output( await this.callApi('dbjson', 'getSong', { name: song }) );
+  }
+
+  else if ('getMixers' in cargs.options) {
+    output( await this.callApi('dbjson', 'getMixers') );
+  }
+
+  else if ('getMixer' in cargs.options) {
+    let mixer = cargs.options.getMixer;
+
+    output( await this.callApi('dbjson', 'getMixer', { name: mixer }) );
   }
 
   else if ('updateSong' in cargs.options) {
@@ -86,17 +113,23 @@ async function onConnect() {
 
     let packet = await this.callApi('dbjson', 'newSong', { name: name })
 
-    if (packet.data.status) {
+    if (packet.status) {
       output(await this.callApi('files', 'newSong', { name: name, daw: daw }));
     } else {
       output(packet)
     }
   }
 
+  else if ('duplicateSong' in cargs.options) {
+    let name    = cargs.options.newSong[0];
+    let newName = cargs.options.newSong[1];
+    let daw     = cargs.options.newSong[2];
+  }
+
   else if ('getDawHomeDir' in cargs.options) {
     let name = cargs.options.getDawHomeDir;
 
-    output(await this.callApi(serverName, 'getDawHomeDir', { name: name }));
+    output(await this.callApi('files', 'getDawHomeDir', { name: name }));
   }
 
   this.ipc.disconnect(serverName);
